@@ -55,8 +55,9 @@ function InvoicePreview({ data, fileName, onReset }) {
   const exportFile = async (format) => {
     setIsExporting(true);
     try {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
       const response = await axios.post(
-        `/api/invoice/export/${format}`,
+        `${apiUrl}/api/invoice/export/${format}`,
         { data: editableData, fileName: fileName.replace('.pdf', '') },
         { responseType: 'blob' }
       );

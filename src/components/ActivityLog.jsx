@@ -12,7 +12,8 @@ function ActivityLog({ onClose }) {
 
   const fetchLogs = async () => {
     try {
-      const response = await axios.get('/api/invoice/logs');
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const response = await axios.get(`${apiUrl}/api/invoice/logs`);
       setLogs(response.data.logs.reverse());
     } catch (error) {
       console.error('Failed to fetch logs:', error);

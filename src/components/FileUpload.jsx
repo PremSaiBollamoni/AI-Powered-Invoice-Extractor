@@ -60,7 +60,8 @@ function FileUpload({ onExtractSuccess }) {
         });
       }, 300);
 
-      const response = await axios.post('/api/invoice/upload', formData, {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const response = await axios.post(`${apiUrl}/api/invoice/upload`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
