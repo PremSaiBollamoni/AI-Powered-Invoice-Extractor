@@ -13,10 +13,13 @@ function ActivityLog({ onClose }) {
   const fetchLogs = async () => {
     try {
       const apiUrl = import.meta.env.VITE_API_URL || '';
+      console.log('Fetching logs from:', `${apiUrl}/api/invoice/logs`);
       const response = await axios.get(`${apiUrl}/api/invoice/logs`);
+      console.log('Logs response:', response.data);
       setLogs(response.data.logs.reverse());
     } catch (error) {
       console.error('Failed to fetch logs:', error);
+      console.error('Error details:', error.response?.data || error.message);
     } finally {
       setLoading(false);
     }
