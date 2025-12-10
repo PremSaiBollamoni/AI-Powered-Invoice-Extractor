@@ -109,6 +109,17 @@ function ApiKeyModal({ isOpen, onClose, onSave }) {
           >
             Cancel
           </button>
+          {localStorage.getItem('gemini_api_key') && (
+            <button
+              onClick={() => {
+                localStorage.removeItem('gemini_api_key');
+                window.location.reload();
+              }}
+              className="px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+            >
+              Clear Key
+            </button>
+          )}
           <button
             onClick={handleSave}
             className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"

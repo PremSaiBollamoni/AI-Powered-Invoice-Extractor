@@ -92,7 +92,17 @@ function FileUpload({ onExtractSuccess }) {
       }, 500);
 
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to process invoice');
+      let errorMessage = err.response?.data?.message || 'Failed to process invoice';
+      
+      // Handle leaked API key error specifically
+      if (errorMessage.includes('API key was reported as leaked')) {
+        errorMessage = 'Your API key has been flagged as compromised. Please get a new API key from Google AI Studio and update it in the settings.';
+        // Clear the stored API key
+        localStorage.removeItem('gemini_api_key');
+        setHasApiKey(false);
+      }
+      
+      setError(errorMessage);
       setIsProcessing(false);
       setProgress(0);
     }
