@@ -1,13 +1,22 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { Upload, FileText, Loader2, AlertCircle, Brain, Zap, Target } from 'lucide-react';
+import { Upload, FileText, Loader2, AlertCircle, Brain, Zap, Target, Key, Settings } from 'lucide-react';
+import ApiKeyModal from './ApiKeyModal';
 
 function FileUpload({ onExtractSuccess }) {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
   const [progress, setProgress] = useState(0);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState(false);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    // Check if API key exists in localStorage
+    const apiKey = localStorage.getItem('gemini_api_key');
+    setHasApiKey(!!apiKey);
+  }, []);
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -41,6 +50,13 @@ function FileUpload({ onExtractSuccess }) {
       return;
     }
 
+    // Check if API key exists
+    const apiKey = localStorage.getItem('gemini_api_key');
+    if (!apiKey) {
+      setShowApiKeyModal(true);
+      return;
+    }
+
     setError('');
     setIsProcessing(true);
     setProgress(0);
@@ -62,7 +78,10 @@ function FileUpload({ onExtractSuccess }) {
 
       const apiUrl = import.meta.env.VITE_API_URL || '';
       const response = await axios.post(`${apiUrl}/api/invoice/upload`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 
+          'Content-Type': 'multipart/form-data',
+          'X-API-Key': apiKey
+        }
       });
 
       clearInterval(progressInterval);
@@ -79,18 +98,49 @@ function FileUpload({ onExtractSuccess }) {
     }
   };
 
+  const handleApiKeySave = (apiKey) => {
+    localStorage.setItem('gemini_api_key', apiKey);
+    setHasApiKey(true);
+  };
+
+  const handleManageApiKey = () => {
+    setShowApiKeyModal(true);
+  };
+
   return (
     <div className="max-w-2xl mx-auto">
+      {/* API Key Status */}
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Key className="w-4 h-4 text-gray-500" />
+          <span className="text-sm text-gray-600">
+            API Key: {hasApiKey ? (
+              <span className="text-green-600 font-medium">✓ Configured</span>
+            ) : (
+              <span className="text-red-600 font-medium">Not configured</span>
+            )}
+          </span>
+        </div>
+        <button
+          onClick={handleManageApiKey}
+          className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+        >
+          <Settings className="w-4 h-4" />
+          {hasApiKey ? 'Update' : 'Add'} API Key
+        </button>
+      </div>
+
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => !isProcessing && fileInputRef.current?.click()}
+        onClick={() => !isProcessing && hasApiKey && fileInputRef.current?.click()}
         className={`
           glass-effect rounded-2xl p-12 text-center cursor-pointer
           transition-all duration-300 transform
           ${isDragging ? 'scale-105 border-blue-500 bg-blue-50/50' : 'hover:scale-102'}
           ${isProcessing ? 'cursor-not-allowed opacity-75' : ''}
+          ${!hasApiKey ? 'cursor-not-allowed opacity-50' : ''}
         `}
       >
         <input
@@ -99,7 +149,7 @@ function FileUpload({ onExtractSuccess }) {
           accept=".pdf"
           onChange={handleFileSelect}
           className="hidden"
-          disabled={isProcessing}
+          disabled={isProcessing || !hasApiKey}
         />
 
         {!isProcessing ? (
@@ -111,7 +161,10 @@ function FileUpload({ onExtractSuccess }) {
               Upload Invoice PDF
             </h3>
             <p className="text-gray-600 mb-6">
-              Drag and drop your invoice here, or click to browse
+              {hasApiKey ? 
+                'Drag and drop your invoice here, or click to browse' :
+                'Please configure your Gemini API key first'
+              }
             </p>
             <div className="flex items-center justify-center gap-4 text-sm text-gray-500">
               <div className="flex items-center gap-2">
@@ -180,6 +233,13 @@ function FileUpload({ onExtractSuccess }) {
           <p className="text-sm text-gray-600">High precision data</p>
         </div>
       </div>
+
+      {/* API Key Modal */}
+      <ApiKeyModal
+        isOpen={showApiKeyModal}
+        onClose={() => setShowApiKeyModal(false)}
+        onSave={handleApiKeySave}
+      />
     </div>
   );
 }
